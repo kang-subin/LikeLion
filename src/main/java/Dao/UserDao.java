@@ -1,0 +1,65 @@
+package Dao;
+import domein.User;
+import java.sql.*;
+import java.util.Map;
+
+public class UserDao {
+private ConnectionMaker connectionMaker; // 인터페이스가 userdao 멤버로 들어온것?
+    UserDao(){
+        this.connectionMaker = new AWSConnectionMaker(); // AWS 디폴트 설정, 다형성(구현한놈을 가리킬수 있다, 인터페이스 참조변수로 인터페이스를 참조한 애를 가리킬수 있다)
+    }
+    UserDao(ConnectionMaker connectionMaker){
+        this.connectionMaker = connectionMaker;
+    }
+
+
+public void add(User user) throws ClassNotFoundException, SQLException {
+    Connection conn = connectionMaker.makeConnection();  // 다형성때문에 참조변수가 aws... 이 아니라 connectionMaker로 될 수 있던 것임
+  //인터페이스에 정의된 메소드를 사용하므로 클래스가 바뀐다해도 메소드 이름이 변경될 걱정이 없음
+    PreparedStatement ps = conn.prepareStatement("INSERT INTO users(id, name, password) VALUES(?, ?, ?)");
+// users 라는 테이블에 각 칼럼마다 값을 넣을것을 의미함
+    ps.setString(1,user.getId()); // 각 물음표에 값을 넣은것
+    ps.setString(2,user.getName());
+    ps.setString(3,user.getPassword());
+
+    ps.executeUpdate(); // 각 값을 저장함
+    ps.close();// 저장한 후 쿼리문 작성 닫기
+    conn.close();// 연결닫기
+}
+public User get (String id) throws SQLException, ClassNotFoundException {
+    Connection conn = connectionMaker.makeConnection();
+    PreparedStatement ps = conn.prepareStatement("SELECT id, name, password From users where id = ?"); // id가 ? 인 값을 뽑아옴
+    ps.setString(1,  id); //  id 값을 1로 했기 때문에 id 값이 1인 애를 뽑아서 rs에 저장함
+    ResultSet rs = ps.executeQuery(); // 셀렉한 값을 Resultset 객체에 반환해주는 메소드
+    rs.next();
+    User user = new User(rs.getString("id"),
+            rs.getString("name"), rs.getString("password"));
+    rs.close();
+    ps.close();
+    conn.close();
+    return user; // user을 리턴해서 rs 안의 값을 출력해볼 수 있음
+}
+    public void deleteAll() throws SQLException, ClassNotFoundException {
+      Connection conn = connectionMaker.makeConnection();
+        PreparedStatement pstmt = conn.prepareStatement("DELETE FROM users");
+        pstmt.executeUpdate();
+        pstmt.close();
+        conn.close();
+
+    }
+
+
+
+
+    public static void main(String[] args) throws SQLException, ClassNotFoundException {
+            UserDao userDao = new UserDao(new LocalConnectionMaker());
+                User user = new User("2","subin", "1234");
+              //  userDao.add(user); // user 값 db에 추가
+                user = userDao.get("2"); // id가 2인 값
+                System.out.println(user.getName()); //id 2인 값 줄의 이름값을 출력
+                userDao.deleteAll();
+
+
+}
+
+}
