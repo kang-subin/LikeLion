@@ -1,5 +1,7 @@
 package Dao;
 import domein.User;
+import org.springframework.dao.EmptyResultDataAccessException;
+
 import java.sql.*;
 import java.util.Map;
 
@@ -32,32 +34,75 @@ public User get (String id) throws SQLException, ClassNotFoundException {
     ps.setString(1,  id); //  id 값을 1로 했기 때문에 id 값이 1인 애를 뽑아서 rs에 저장함
     ResultSet rs = ps.executeQuery(); // 셀렉한 값을 Resultset 객체에 반환해주는 메소드
     rs.next();
-    User user = new User(rs.getString("id"),
-            rs.getString("name"), rs.getString("password"));
+    User user = new User(rs.getString("id"), rs.getString("name"), rs.getString("password"));
     rs.close();
     ps.close();
     conn.close();
+    if(user == null) throw new EmptyResultDataAccessException(1); // 1 왜 넣는거죠?
     return user; // user을 리턴해서 rs 안의 값을 출력해볼 수 있음
 }
     public void deleteAll() throws SQLException, ClassNotFoundException {
-      Connection conn = connectionMaker.makeConnection();
-        PreparedStatement pstmt = conn.prepareStatement("DELETE FROM users");
-        pstmt.executeUpdate();
-        pstmt.close();
-        conn.close();
+        Connection conn = null;
+        PreparedStatement pstmt = null;
+        try {
+            conn = connectionMaker.makeConnection();
+            pstmt = new DeleteAllStrategy().makePreparedStatement(conn); // delectall 쿼리를 가지고 있는 pstmt를 의미함
+            pstmt.executeUpdate();
 
+        } catch (SQLException e) {
+
+        } finally { // error가 실행되도 무조건 실행되는 블럭
+            if(pstmt != null){
+                try {
+                    pstmt.close();
+                } catch (SQLException e) {
+                }
+                }
+        if( conn != null) {
+            try {
+                conn.close();
+            } catch (SQLException e){
+
+            }
+
+        }
+        }
+
+
+
+    }
+
+    public int getCount() throws SQLException, ClassNotFoundException {
+        Connection conn = null;
+        ResultSet rs = null;
+        int count = 0;
+        try {
+            conn = connectionMaker.makeConnection();
+            PreparedStatement pstmt = conn.prepareStatement("SELECT count(*) from `users`");
+            rs = pstmt.executeQuery();
+            rs.next();
+            count = rs.getInt(1);
+        } catch (SQLException e) {
+            throw e;
+       // } finally { if( )
+        }
+        rs.close();
+        conn.close();
+        return count;
     }
 
 
 
-
     public static void main(String[] args) throws SQLException, ClassNotFoundException {
-            UserDao userDao = new UserDao(new LocalConnectionMaker());
-                User user = new User("2","subin", "1234");
+            UserDao userDao = new UserDao(new AWSConnectionMaker());
+             User user = new User("7","jj" , "1234" );
+             userDao.add(user);
               //  userDao.add(user); // user 값 db에 추가
-                user = userDao.get("2"); // id가 2인 값
+                user = userDao.get("7"); // id가 2인 값
                 System.out.println(user.getName()); //id 2인 값 줄의 이름값을 출력
-                userDao.deleteAll();
+                 int count = userDao.getCount();
+                 System.out.println(count);
+        // userDao.deleteAll();
 
 
 }

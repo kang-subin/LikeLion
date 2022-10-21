@@ -6,6 +6,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationContext;
+import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 
@@ -14,17 +15,22 @@ import static org.junit.jupiter.api.Assertions.*;
 @ExtendWith(SpringExtension.class) // application context 로드
 @ContextConfiguration(classes = UserDaoFactory.class) // application context 위치지정 (bean이 담겨있는 곳)
 class UserDaoTest {
-UserDao userDao;
     @Autowired
     ApplicationContext context; //이곳에 bean 값이 ? 주입되서 이걸통해 bean 을 꺼내 쓸 수 있음
-@BeforeEach // @test가 매번 실행될 때 실행되는 코드를 공통화 함
-void setup() {
-    this.userDao = context.getBean("awsUserDao", UserDao.class);
+        UserDao userDao = context.getBean("awsUserDao", UserDao.class);
+        User user1 = new User("1", "subin", "1234");
+        User user2 = new User("2", "yi", "1234");
+        User user3 = new User("3", "sa", "1234");
 
-}
+    @BeforeEach
+        // @test가 매번 실행될 때 실행되는 코드를 공통화 함
+    void setup() { // 보통 이 이름으로 함
+        UserDao userDao = context.getBean("awsUserDao", UserDao.class);
+    }
 
 
-    @Test // test
+    @Test
+        // test
     void addAndSelect() throws SQLException, ClassNotFoundException {
 
         //UserDaoFactory userDaoFactory = new UserDaoFactory();
@@ -38,32 +44,36 @@ void setup() {
 //        String id ="7";
 //        userDao.add(new User(id,"kangsubin","1234"));
     }
+
     @Test
     void addAndGet() throws SQLException, ClassNotFoundException {
-        UserDao userDao = context.getBean("awsUserDao", UserDao.class);
+       // UserDao userDao = context.getBean("awsUserDao", UserDao.class);
         userDao.deleteAll();
         assertEquals(0, userDao.getCount());
         String id = "7";
-      userDao.add(new User(id,"yel", "1234"));
+        userDao.add(new User(id, "yel", "1234"));
         User user = userDao.get(id);
-}
-    @Test
-void count() throws SQLException, ClassNotFoundException {
-    User user1 = new User("1", "subin", "1234");
-    User user2 = new User("2", "yi", "1234");
-    User user3 = new User("3", "sa", "1234");
-  //  UserDao userDao = context.getBean("awsUserDao", UserDao.class);
-    userDao.deleteAll();
-    assertEquals(0,userDao.getCount());
-    userDao.add(user1);
-    assertEquals(1,userDao.getCount());
-    userDao.add(user2);
-    assertEquals(2,userDao.getCount());
-    userDao.add(user3);
-    assertEquals(3,userDao.getCount());
-
+        assertEquals(1, userDao.getCount());
     }
 
+    @Test
+    void count() throws SQLException, ClassNotFoundException {
 
+//    UserDao userDao = context.getBean("awsUserDao", UserDao.class);
+//        User user1 = new User("1", "subin", "1234");
+//        User user2 = new User("2", "yi", "1234");
+//        User user3 = new User("3", "sa", "1234");
 
+        userDao.deleteAll();
+        assertEquals(0, userDao.getCount());
+        userDao.add(user1);
+        assertEquals(1, userDao.getCount());
+        userDao.add(user2);
+        assertEquals(2, userDao.getCount());
+        userDao.add(user3);
+        assertEquals(3, userDao.getCount());
+
+    }
 }
+
+
