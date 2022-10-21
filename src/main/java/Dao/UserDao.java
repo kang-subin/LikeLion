@@ -17,9 +17,10 @@ private ConnectionMaker connectionMaker; // 인터페이스가 userdao 멤버로
 
 public void add(User user) throws ClassNotFoundException, SQLException {
     Connection conn = connectionMaker.makeConnection();  // 다형성때문에 참조변수가 aws... 이 아니라 connectionMaker로 될 수 있던 것임
-  //인터페이스에 정의된 메소드를 사용하므로 클래스가 바뀐다해도 메소드 이름이 변경될 걱정이 없음
-    PreparedStatement ps = conn.prepareStatement("INSERT INTO users(id, name, password) VALUES(?, ?, ?)");
-// users 라는 테이블에 각 칼럼마다 값을 넣을것을 의미함
+    //인터페이스에 정의된 메소드를 사용하므로 클래스가 바뀐다해도 메소드 이름이 변경될 걱정이 없음
+    PreparedStatement ps = new AddStrategy().makePreparedStatement(conn);
+    // PreparedStatement ps = conn.prepareStatement("INSERT INTO users(id, name, password) VALUES(?, ?, ?)");
+    // users 라는 테이블에 각 칼럼마다 값을 넣을것을 의미함
     ps.setString(1,user.getId()); // 각 물음표에 값을 넣은것
     ps.setString(2,user.getName());
     ps.setString(3,user.getPassword());
@@ -41,23 +42,23 @@ public User get (String id) throws SQLException, ClassNotFoundException {
     if(user == null) throw new EmptyResultDataAccessException(1); // 1 왜 넣는거죠?
     return user; // user을 리턴해서 rs 안의 값을 출력해볼 수 있음
 }
-    public void deleteAll() throws SQLException, ClassNotFoundException {
-        Connection conn = null;
-        PreparedStatement pstmt = null;
-        try {
-            conn = connectionMaker.makeConnection();
-            pstmt = new DeleteAllStrategy().makePreparedStatement(conn); // delectall 쿼리를 가지고 있는 pstmt를 의미함
-            pstmt.executeUpdate();
+public void jdbcContextWithStatementStrategy(StatmentStrategy stmt) throws SQLException, ClassNotFoundException {
+    Connection conn = null;
+    PreparedStatement pstmt = null;
+    try {
+        conn = connectionMaker.makeConnection();
+        pstmt = new DeleteAllStrategy().makePreparedStatement(conn); // delectall 쿼리를 가지고 있는 pstmt를 의미함
+        pstmt.executeUpdate();
 
-        } catch (SQLException e) {
-
-        } finally { // error가 실행되도 무조건 실행되는 블럭
-            if(pstmt != null){
-                try {
-                    pstmt.close();
-                } catch (SQLException e) {
-                }
-                }
+    } catch (SQLException | ClassNotFoundException e) {
+         throw e;
+    } finally { // error가 실행되도 무조건 실행되는 블럭
+        if(pstmt != null){
+            try {
+                pstmt.close();
+            } catch (SQLException e) {
+            }
+        }
         if( conn != null) {
             try {
                 conn.close();
@@ -66,9 +67,17 @@ public User get (String id) throws SQLException, ClassNotFoundException {
             }
 
         }
-        }
+    }
 
 
+
+}
+
+
+
+    public void deleteAll() throws SQLException, ClassNotFoundException {
+        new DeleteAllStrategy().makePreparedStatement(connectionMaker.makeConnection());   // deleatall 쿼리문 실행
+        jdbcContextWithStatementStrategy(new DeleteAllStrategy());   //실행할때 처리해줘야 하는 try catch 문 실행
 
     }
 
