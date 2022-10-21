@@ -76,8 +76,7 @@ public void jdbcContextWithStatementStrategy(StatmentStrategy stmt) throws SQLEx
 
 
     public void deleteAll() throws SQLException, ClassNotFoundException {
-        new DeleteAllStrategy().makePreparedStatement(connectionMaker.makeConnection());   // deleatall 쿼리문 실행
-        jdbcContextWithStatementStrategy(new DeleteAllStrategy());   //실행할때 처리해줘야 하는 try catch 문 실행
+        jdbcContextWithStatementStrategy(new DeleteAllStrategy());
 
     }
 
