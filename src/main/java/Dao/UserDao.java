@@ -15,19 +15,16 @@ private ConnectionMaker connectionMaker; // 인터페이스가 userdao 멤버로
     }
 
 
-public void add(User user) throws ClassNotFoundException, SQLException {
-    Connection conn = connectionMaker.makeConnection();  // 다형성때문에 참조변수가 aws... 이 아니라 connectionMaker로 될 수 있던 것임
+    public void add(User user) throws ClassNotFoundException, SQLException {
+    jdbcContextWithStatementStrategy(new AddStrategy(user));
+
+
+  //  Connection conn = connectionMaker.makeConnection();  // 다형성때문에 참조변수가 aws... 이 아니라 connectionMaker로 될 수 있던 것임
     //인터페이스에 정의된 메소드를 사용하므로 클래스가 바뀐다해도 메소드 이름이 변경될 걱정이 없음
-    PreparedStatement ps = new AddStrategy().makePreparedStatement(conn);
+    //PreparedStatement ps = new AddStrategy().makePreparedStatement(conn);
     // PreparedStatement ps = conn.prepareStatement("INSERT INTO users(id, name, password) VALUES(?, ?, ?)");
     // users 라는 테이블에 각 칼럼마다 값을 넣을것을 의미함
-    ps.setString(1,user.getId()); // 각 물음표에 값을 넣은것
-    ps.setString(2,user.getName());
-    ps.setString(3,user.getPassword());
 
-    ps.executeUpdate(); // 각 값을 저장함
-    ps.close();// 저장한 후 쿼리문 작성 닫기
-    conn.close();// 연결닫기
 }
 public User get (String id) throws SQLException, ClassNotFoundException {
     Connection conn = connectionMaker.makeConnection();
