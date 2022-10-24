@@ -23,9 +23,9 @@ public class UserDaoFactory {
 
 
     @Bean
-    DataSource awsDataSource() {
-        Map<String, String> env = System.getenv();
+    public DataSource awsDataSource() {
         SimpleDriverDataSource dataSource = new SimpleDriverDataSource();
+        Map<String, String> env = System.getenv();
         dataSource.setDriverClass(com.mysql.cj.jdbc.Driver.class);
         dataSource.setUrl(env.get("DB_HOST"));
         dataSource.setUsername(env.get("DB_USER"));
@@ -33,7 +33,7 @@ public class UserDaoFactory {
         return dataSource;
     }
     @Bean
-    DataSource localDataSource() {
+    public DataSource localDataSource() {
         Map<String, String> env = System.getenv();
         SimpleDriverDataSource dataSource = new SimpleDriverDataSource();
         dataSource.setDriverClass(com.mysql.cj.jdbc.Driver.class);
