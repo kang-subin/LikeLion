@@ -2,16 +2,17 @@ package Dao;
 import domein.User;
 import org.springframework.dao.EmptyResultDataAccessException;
 
+import javax.sql.DataSource;
 import java.sql.*;
 import java.util.Map;
 
 public class UserDao {
-private ConnectionMaker connectionMaker; // 인터페이스가 userdao 멤버로 들어온것?
+private final DataSource dataSource; // 인터페이스가 userdao 멤버로 들어온것?
     UserDao(){
-        this.connectionMaker = new AWSConnectionMaker(); // AWS 디폴트 설정, 다형성(구현한놈을 가리킬수 있다, 인터페이스 참조변수로 인터페이스를 참조한 애를 가리킬수 있다)
+        this.dataSource = new UserDaoFactory().awsDataSource(); // AWS 디폴트 설정, 다형성(구현한놈을 가리킬수 있다, 인터페이스 참조변수로 인터페이스를 참조한 애를 가리킬수 있다)
     }
-    UserDao(ConnectionMaker connectionMaker){
-        this.connectionMaker = connectionMaker;
+    UserDao(DataSource dataSource){
+        this.dataSource = dataSource;
     }
 
 
@@ -27,7 +28,7 @@ private ConnectionMaker connectionMaker; // 인터페이스가 userdao 멤버로
 
 }
 public User get (String id) throws SQLException, ClassNotFoundException {
-    Connection conn = connectionMaker.makeConnection();
+    Connection conn = dataSource.getConnection();
     PreparedStatement ps = conn.prepareStatement("SELECT id, name, password From users where id = ?"); // id가 ? 인 값을 뽑아옴
     ps.setString(1,  id); //  id 값을 1로 했기 때문에 id 값이 1인 애를 뽑아서 rs에 저장함
     ResultSet rs = ps.executeQuery(); // 셀렉한 값을 Resultset 객체에 반환해주는 메소드
@@ -45,11 +46,11 @@ public void jdbcContextWithStatementStrategy(StatmentStrategy stmt) throws SQLEx
 
 
     try {
-        conn = connectionMaker.makeConnection();
+        conn = dataSource.getConnection();
         pstmt = new AddStrategy(new User("2", "subin", "1234")).makePreparedStatement(conn); // delectall 쿼리를 가지고 있는 pstmt를 의미함
         pstmt.executeUpdate();
 
-    } catch (SQLException | ClassNotFoundException e) {
+    } catch (SQLException e) {
          throw e;
     } finally { // error가 실행되도 무조건 실행되는 블럭
         if(pstmt != null){
@@ -84,7 +85,7 @@ public void jdbcContextWithStatementStrategy(StatmentStrategy stmt) throws SQLEx
         ResultSet rs = null;
         int count = 0;
         try {
-            conn = connectionMaker.makeConnection();
+            conn = dataSource.getConnection();
             PreparedStatement pstmt = conn.prepareStatement("SELECT count(*) from `users`");
             rs = pstmt.executeQuery();
             rs.next();
@@ -101,7 +102,7 @@ public void jdbcContextWithStatementStrategy(StatmentStrategy stmt) throws SQLEx
 
 
     public static void main(String[] args) throws SQLException, ClassNotFoundException {
-            UserDao userDao = new UserDao(new AWSConnectionMaker());
+            UserDao userDao = new UserDao(new UserDaoFactory().awsDataSource());
              userDao.add(new User("2" ,"subin", "1234"));
 
 }
